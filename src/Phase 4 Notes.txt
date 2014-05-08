@@ -1,0 +1,5 @@
+1. Connection Opens
+2. Client Sends Request
+3. Server Sends Response
+4. Connection Closes
+

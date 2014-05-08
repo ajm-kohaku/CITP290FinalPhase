@@ -1,0 +1,10 @@
+----------------------------------------------------------------
+Thu May 08 00:23:31 EDT 2014:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.8.2.2 - (1181258): instance a816c00e-0145-da12-69d8-000000cf7f20 
+on database directory C:\Users\Dukat\IdeaProjects\GaroPop\POPDB  with class loader sun.misc.Launcher$AppClassLoader@765291 
+Loaded from file:/C:/Users/Dukat/Documents/GitHub/citp290/derby.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_25-b16
+user.dir=C:\Users\Dukat\IdeaProjects\GaroPop
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''
