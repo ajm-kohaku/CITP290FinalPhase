@@ -16,14 +16,14 @@ public class DBProductDAO implements DataAccessObject<Product> {
 
     //prepared statements
     private static final String SELECT_ALL_PRODUCTS =
-            "SELECT upc, description, price, stock FROM inventory";
+            "SELECT upc, description, price, num_stock FROM inventory";
     private static final String SELECT_PRODUCT =
-            "SELECT upc, description, price, stock FROM inventory WHERE upc = ?";
+            "SELECT upc, description, price, num_stock FROM inventory WHERE upc = ?";
     private static final String INSERT_PRODUCT =
-            "INSERT INTO inventory (upc, description, price, stock) VALUES(?,?,?,?)";
+            "INSERT INTO inventory (upc, description, price, num_stock) VALUES(?,?,?,?)";
 
     private static final String UPDATE_PRODUCT =
-            "UPDATE inventory SET description = ?, price = ?, stock = ?" +
+            "UPDATE inventory SET description = ?, price = ?, num_stock = ?" +
                     "WHERE upc = ?";
     private static final String DELETE_PRODUCT =
             "DELETE FROM inventory WHERE upc = ?";
@@ -49,19 +49,8 @@ public class DBProductDAO implements DataAccessObject<Product> {
                         p.setUpc(rs.getString("upc"));
                         p.setDescription(rs.getString("description"));
                         p.setPrice(rs.getBigDecimal("price"));
-                        p.getNumInStock(rs.getInt("num_stock"));
+                        p.setNumInStock(rs.getInt("num_stock"));
                         up.add(p);
-                    }
-                    if (us.size() == 0) {
-                        us.add(bootStrap());
-                        try (PreparedStatement insertProduct = derbyCon
-                                .prepareStatement(INSERT_PRODUCT)) {
-                            insertProduct.setString(1, us.get(0).getProductname());
-                            insertProduct.setString(2, new String(us.get(0).getPassword()));
-                            insertProduct.setString(3, us.get(0).getAccessLevel());
-
-                            insertProduct.execute();
-                        }
                     }
                 }
             }
@@ -70,29 +59,30 @@ public class DBProductDAO implements DataAccessObject<Product> {
             System.out.println("Unable to execute query.");
             e.printStackTrace();
         }
-        return us;
+        return up;
     }
 
     private HashMap<String, Product> readAllProductsHash() {
-        HashMap<String, Product> us = new HashMap<>();
-        List<Product> userList = readAllProducts();
-        for (Product u : userList) {
-            us.put(u.getProductname(), u);
+        HashMap<String, Product> up = new HashMap<>();
+        List<Product> productList = readAllProducts();
+        for (Product p : productList) {
+            up.put(p.getUpc(), p);
         }
-        return us;
+        return up;
     }
 
     @Override
     public void create(Product data) throws DataAccessException {
-        Product user = readAllProductsHash().get(data.getProductname());
-        if (user == null) {
+        Product product = read(data.getUpc());
+        if (product.getUpc() == null) {
             try (Connection derbyCon = DriverManager
                     .getConnection(DERBY_CREATE_CONNECTION)) {
                 try (PreparedStatement insertProduct = derbyCon
                         .prepareStatement(INSERT_PRODUCT)) {
-                    insertProduct.setString(1, data.getProductname());
-                    insertProduct.setString(2, new String(data.getPassword()));
-                    insertProduct.setString(3, data.getProductname());
+                    insertProduct.setString(1, data.getUpc());
+                    insertProduct.setString(2, data.getDescription());
+                    insertProduct.setBigDecimal(3, data.getPrice());
+                    insertProduct.setInt(4, data.getNumInStock());
 
                     insertProduct.execute();
 
@@ -100,45 +90,50 @@ public class DBProductDAO implements DataAccessObject<Product> {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+            System.out.println("add Product called..");
         }
 
     }
 
     @Override
     public Product read(String key) throws DataAccessException {
-        Product user = new Product();
+        Product product = new Product();
         try (Connection derbyCon = DriverManager
                 .getConnection(DERBY_CREATE_CONNECTION)) {
             try (PreparedStatement readProduct = derbyCon
                     .prepareStatement(SELECT_PRODUCT)) {
                 readProduct.setString(1, key);
                 try (ResultSet rs = readProduct.executeQuery()) {
-                    while (rs.next()) {
-                        user.setProductname(rs.getString("username"));
-                        user.setPassword(rs.getString("password").toCharArray());
-                        user.setAccessLevel(rs.getString("accesslevel"));
+                    if (rs.next()) {
+                        product.setUpc(rs.getString("upc"));
+                        product.setDescription(rs.getString("description"));
+                        product.setPrice(rs.getBigDecimal("price"));
+                        product.setNumInStock(rs.getInt("num_stock"));
+
+                        System.out.println("\nStart List:\n");
+                        System.out.println(product.getUpc() + "\t" + product.getDescription());
                     }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        return user;
+        System.out.println("read Product called..");
+        return product;
     }
 
     @Override
     public void update(Product data) throws DataAccessException {
-        Product user = readAllProductsHash().get(data.getProductname());
-        if (user != null) {
+        Product product = read(data.getUpc());
+        if (product != null) {
             try (Connection derbyCon = DriverManager
                     .getConnection(DERBY_CREATE_CONNECTION)) {
                 try (PreparedStatement updateProduct = derbyCon
                         .prepareStatement(UPDATE_PRODUCT)) {
-                    updateProduct.setString(1, user.getProductname());
-                    updateProduct.setString(2, new String(data.getPassword()));
-                    updateProduct.setString(3, data.getAccessLevel());
-                    updateProduct.setString(4, user.getProductname());
+                    updateProduct.setString(1, data.getDescription());
+                    updateProduct.setBigDecimal(2, data.getPrice());
+                    updateProduct.setString(3, String.valueOf(data.getNumInStock()));
+                    updateProduct.setString(4, product.getUpc());
                     updateProduct.execute();
 
                 }
@@ -150,13 +145,13 @@ public class DBProductDAO implements DataAccessObject<Product> {
 
     @Override
     public void delete(String key) throws DataAccessException {
-        Product user = readAllProductsHash().get(key);
-        if (user != null) {
+        Product product = read(key);
+        if (product != null) {
             try (Connection derbyCon = DriverManager
                     .getConnection(DERBY_CREATE_CONNECTION)) {
                 try (PreparedStatement updateProduct = derbyCon
                         .prepareStatement(DELETE_PRODUCT)) {
-                    updateProduct.setString(1, user.getProductname());
+                    updateProduct.setString(1, product.getUpc());
 
                     updateProduct.execute();
 
@@ -169,8 +164,8 @@ public class DBProductDAO implements DataAccessObject<Product> {
 
     @Override
     public List<Product> listAll() throws DataAccessException {
-        HashMap<String, Product> us = readAllProductsHash();
-        return new ArrayList<>(us.values());
+        HashMap<String, Product> up = readAllProductsHash();
+        return new ArrayList<>(up.values());
     }
 
     @Override

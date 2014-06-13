@@ -29,6 +29,7 @@ import java.text.NumberFormat;
  * @author Amber Murphy
  */
 public class Product implements Serializable {
+
     private static final long serialVersionUID = 8023480059884662475L;
     private String upc;
     private String description;
@@ -52,31 +53,6 @@ public class Product implements Serializable {
     }
 
     public Product(Product p) {
-    }
-
-    public Product(String personData) {
-        String[] data = personData.split("\t", -1);
-        upc = data[0];
-        description = data[1];
-        price = new BigDecimal(data[2]);
-        quantity = Integer.parseInt(data[3]);
-        numInStock = Integer.parseInt(data[4]);
-    }
-
-    /**
-     * This method creates a screen friendly display of the Product.
-     *
-     * @param p
-     * @return print
-     */
-    public static String printProduct(Product p) {
-        NumberFormat nf = NumberFormat.getCurrencyInstance();
-
-        String print = p.getUpc() + "| "
-                + p.getDescription() + "| "
-                + nf.format(p.getPrice()) + "| "
-                + p.getNumInStock();
-        return print;
     }
 
     public String getUpc() {
@@ -117,20 +93,6 @@ public class Product implements Serializable {
 
     public void setNumInStock(int numInStock) {
         this.numInStock = numInStock;
-    }
-
-    /**
-     * creates a string to output to a file.
-     * this was taken directly from class example.
-     *
-     * @return print
-     */
-    public String toDataString() {
-        return upc + "\t" +
-                description + "\t" +
-                price + "\t" +
-                quantity + "\t" +
-                numInStock;
     }
 
     @Override

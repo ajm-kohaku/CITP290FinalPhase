@@ -38,22 +38,26 @@ public class ProductServerAO implements DataAccessObject<Product> {
         return response;
     }
 
-    private List<Product> readAllUsers() {
+    @SuppressWarnings("unchecked")
+    private List<Product> readAllProducts() {
         List<Product> us = new ArrayList<>();
-        Response resp = accessServer(new Request("LIST USERS", null));
+        Response resp = accessServer(new Request("LIST PRODUCTS", null));
         if (resp.getHeader().equals("SUCCESS")) {
 
+
             us = (List<Product>) resp.getPayload();
+
         } else {
             //TODO: display (readAllUsers) error message
+            System.out.println("Unable to read products");
         }
         return us;
     }
 
-    private HashMap<String, Product> readAllUsersHash() {
+    private HashMap<String, Product> readAllProductsHash() {
         HashMap<String, Product> us = new HashMap<>();
-        List<Product> userList = readAllUsers();
-        for (Product u : userList) {
+        List<Product> productList = readAllProducts();
+        for (Product u : productList) {
             us.put(u.getUpc(), u);
         }
         return us;
@@ -63,10 +67,13 @@ public class ProductServerAO implements DataAccessObject<Product> {
     @Override
     public void create(Product data) throws DataAccessException {
         Product user = read(data.getUpc());
-        if (user == null) {
-            Response resp = accessServer(new Request("ADD USER", data));
+        if (user.getUpc() == null) {
+            Response resp = accessServer(new Request("ADD PRODUCT", data));
             if (!resp.getHeader().equals("SUCCESS")) {
                 //TODO: display (create) error message
+                System.out.println("Product not created");
+            } else {
+                System.out.println("Product created");
             }
         }
     }
@@ -74,7 +81,7 @@ public class ProductServerAO implements DataAccessObject<Product> {
     @Override
     public Product read(String key) throws DataAccessException {
         Product user = new Product();
-        Request rqst = new Request("READ USER", key);
+        Request rqst = new Request("READ PRODUCT", key);
         Response resp = accessServer(rqst);
         if (resp.getHeader().equals("SUCCESS")) {
 
@@ -89,8 +96,8 @@ public class ProductServerAO implements DataAccessObject<Product> {
     @Override
     public void update(Product data) throws DataAccessException {
         Product user = read(data.getUpc());
-        if (user != null) {
-            Response resp = accessServer(new Request("UPDATE USER", data));
+        if (user.getUpc() != null) {
+            Response resp = accessServer(new Request("UPDATE PRODUCT", data));
             if (!resp.getHeader().equals("SUCCESS")) {
                 //TODO: display (update) error message
             }
@@ -102,7 +109,7 @@ public class ProductServerAO implements DataAccessObject<Product> {
     public void delete(String key) throws DataAccessException {
         Product user = read(key);
         if (user != null) {
-            Response resp = accessServer(new Request("REMOVE USER", key));
+            Response resp = accessServer(new Request("REMOVE PRODUCT", key));
             if (!resp.getHeader().equals("SUCCESS")) {
                 //TODO: display (delete) error message
             }
@@ -111,11 +118,11 @@ public class ProductServerAO implements DataAccessObject<Product> {
 
     @Override
     public List<Product> listAll() throws DataAccessException {
-        return readAllUsers();
+        return readAllProducts();
     }
 
     @Override
     public HashMap<String, Product> hashList() {
-        return readAllUsersHash();
+        return readAllProductsHash();
     }
 }

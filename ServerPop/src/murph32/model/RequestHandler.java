@@ -1,19 +1,22 @@
 package murph32.model;
 
+import murph32.core.Product;
 import murph32.core.Request;
 import murph32.core.Response;
 import murph32.core.User;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Dukat on 5/3/2014.
+ *
  */
 public class RequestHandler implements Runnable {
     private static DBUserDAO userDAO = new DBUserDAO();
+    private static DBProductDAO productDAO = new DBProductDAO();
     private Socket sock;
 
     public RequestHandler(Socket sock) {
@@ -55,6 +58,27 @@ public class RequestHandler implements Runnable {
                     deleteUser((String) rqst.getPayload());
                     resp = new Response("SUCCESS", null);
                     break;
+                case "LIST PRODUCTS":
+                    ArrayList<Product> lp = (ArrayList<Product>) getProducts();
+                    resp = new Response("SUCCESS", lp);
+                    break;
+                case "ADD PRODUCT":
+                    addProduct((Product) rqst.getPayload());
+                    resp = new Response("SUCCESS", null);
+                    break;
+                case "READ PRODUCT":
+                    Product rp = findProduct((String) rqst.getPayload());
+                    resp = new Response("SUCCESS", rp);
+                    break;
+                case "UPDATE PRODUCT":
+                    Product up = (Product) rqst.getPayload();
+                    updateProduct(up.getUpc(), up.getDescription(), up.getPrice(), up.getNumInStock());
+                    resp = new Response("SUCCESS", null);
+                    break;
+                case "REMOVE PRODUCT":
+                    deleteProduct((String) rqst.getPayload());
+                    resp = new Response("SUCCESS", null);
+                    break;
                 default:
                     resp = new Response("FAILURE", null);
                     break;
@@ -69,11 +93,34 @@ public class RequestHandler implements Runnable {
         }
     }
 
+
+    private void addProduct(Product p) {
+        try {
+            productDAO.create(p);
+        } catch (DataAccessException e) {
+            System.out.println("Unable to create product: " + p.getDescription());
+            e.printStackTrace();
+        }
+    }
+
     public void addUser(User u) {
         try {
             userDAO.create(u);
         } catch (DataAccessException e) {
             System.out.println("Unable to create user: " + u.getUsername());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateProduct(String upc, String description, BigDecimal price, int numInStock) {
+        try {
+            Product p = productDAO.read(upc);
+            p.setDescription(description);
+            p.setPrice(price);
+            p.setNumInStock(numInStock);
+            productDAO.update(p);
+        } catch (DataAccessException e) {
+            System.out.println("Unable to update user: " + upc);
             e.printStackTrace();
         }
     }
@@ -91,6 +138,15 @@ public class RequestHandler implements Runnable {
 
     }
 
+    private void deleteProduct(String upc) {
+        try {
+            productDAO.delete(upc);
+        } catch (DataAccessException e) {
+            System.out.println("Unable to delete product: " + upc);
+            e.printStackTrace();
+        }
+    }
+
     public void deleteUser(String username) {
         try {
             userDAO.delete(username);
@@ -98,6 +154,17 @@ public class RequestHandler implements Runnable {
             System.out.println("Unable to delete user: " + username);
             e.printStackTrace();
         }
+    }
+
+    private Product findProduct(String upc) {
+        Product p = null;
+        try {
+            p = productDAO.read(upc);
+        } catch (DataAccessException e) {
+            System.out.println("Unable to find product: " + upc);
+            e.printStackTrace();
+        }
+        return p;
     }
 
     public User findUser(String username) {
@@ -122,4 +189,14 @@ public class RequestHandler implements Runnable {
         return us;
     }
 
+    public List<Product> getProducts() {
+        List<Product> ps = new ArrayList<>();
+        try {
+            ps.addAll(productDAO.listAll());
+        } catch (DataAccessException e) {
+            System.out.println("Unable to find products");
+            e.printStackTrace();
+        }
+        return ps;
+    }
 }

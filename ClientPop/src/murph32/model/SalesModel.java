@@ -2,16 +2,16 @@ package murph32.model;
 
 import murph32.core.Product;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 /**
  * <code>SalesModel</code> translates the data from the server to the Sales display.
  */
 public class SalesModel {
-    public List<Product> getProducts() {
-        List<Product> productList = new ArrayList<>();
+    private DataAccessObject<Product> sao = new ProductServerAO();
 
-        return productList;
+    public HashMap<String, Product> getProducts() {
+        return sao.hashList();
+
     }
 }
